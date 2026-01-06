@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { KDEForm } from "@/components/fsma/kde-form"
-import { CTEFlowDiagram } from "@/components/fsma/cte-flow-diagram"
 import type { CTEType, OrganizationType } from "@/lib/types"
 import { useLanguage } from "@/hooks/use-language"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -99,7 +98,7 @@ export default function NewCTEEventPage() {
   ]
 
   // Ép kiểu KDEForm để chấp nhận onSuccess prop nếu định nghĩa gốc bị thiếu
-  const KDEFormSafe = KDEForm as any;
+  const KDEFormSafe = KDEForm as any
 
   return (
     <div className="space-y-6">
@@ -115,15 +114,6 @@ export default function NewCTEEventPage() {
           <p className="text-muted-foreground">{t("newCteEvent.description")}</p>
         </div>
       </div>
-
-      {!isLoadingOrg && organizationType && (
-        <CTEFlowDiagram
-          organizationType={organizationType}
-          organizationName={organizationName}
-          completedStages={completedCTEs}
-          currentStage={selectedEventType}
-        />
-      )}
 
       {/* Event Type Selection */}
       <Card>

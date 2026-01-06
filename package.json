@@ -2,13 +2,13 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
-"scripts": {
+  "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "extract": "i18next --config i18next-parser.config.js"
-},
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@jest/globals": "30.2.0",

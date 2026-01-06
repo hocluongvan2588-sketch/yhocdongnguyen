@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { createBrowserClient } from "@/lib/supabase/client"
 import type { CTEType } from "@/lib/types"
@@ -269,6 +270,8 @@ export function KDEForm({ eventType, locale = "en" }: KDEFormProps) {
 
   const t = (key: string, replacements?: Record<string, string>) => getCteFormTranslation(locale, key, replacements)
 
+  const progressPercentage = requiredFields > 0 ? (completedFields / requiredFields) * 100 : 0
+
   useEffect(() => {
     const loadData = async () => {
       const {
@@ -496,7 +499,6 @@ export function KDEForm({ eventType, locale = "en" }: KDEFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Progress Indicator */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -513,9 +515,14 @@ export function KDEForm({ eventType, locale = "en" }: KDEFormProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <AlertCircle className="size-4" />
-            <span>{t("cteForm.complianceNote")}</span>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm font-medium">
+              <span className="text-muted-foreground">
+                {locale === "vi" ? "Tiến độ hoàn thành" : "Completion Progress"}
+              </span>
+              <span className="text-primary">{Math.round(progressPercentage)}%</span>
+            </div>
+            <Progress value={progressPercentage} className="h-2" />
           </div>
         </CardContent>
       </Card>
