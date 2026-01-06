@@ -5,12 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { KDEForm } from "@/components/fsma/kde-form"
 import type { CTEType, OrganizationType } from "@/lib/types"
 import { useLanguage } from "@/hooks/use-language"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { useOrganizationCTEs } from "@/hooks/use-organization-ctes"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function NewCTEEventPage() {
   const [selectedEventType, setSelectedEventType] = useState<CTEType | null>(null)
@@ -21,6 +23,8 @@ export default function NewCTEEventPage() {
 
   const { t, locale } = useLanguage()
   const supabase = createBrowserClient()
+
+  const { allowedCTEs } = useOrganizationCTEs(organizationType)
 
   useEffect(() => {
     const loadOrganizationData = async () => {
@@ -34,11 +38,9 @@ export default function NewCTEEventPage() {
           return
         }
 
-        // Get user's organization
         const { data: profile } = await supabase.from("profiles").select("organization_id").eq("id", user.id).single()
 
         if (profile?.organization_id) {
-          // Get organization details
           const { data: org } = await supabase
             .from("organizations")
             .select("name, organization_type")
@@ -50,7 +52,6 @@ export default function NewCTEEventPage() {
             setOrganizationType(org.organization_type as OrganizationType)
           }
 
-          // Get completed CTE events
           const { data: cteEvents } = await supabase
             .from("cte_events")
             .select("event_type")
@@ -58,7 +59,6 @@ export default function NewCTEEventPage() {
             .order("created_at", { ascending: false })
 
           if (cteEvents && cteEvents.length > 0) {
-            // Get unique event types
             const uniqueTypes = Array.from(new Set(cteEvents.map((e) => e.event_type as CTEType)))
             setCompletedCTEs(uniqueTypes)
           }
@@ -97,12 +97,13 @@ export default function NewCTEEventPage() {
     },
   ]
 
-  // Ép kiểu KDEForm để chấp nhận onSuccess prop nếu định nghĩa gốc bị thiếu
+  const filteredEventTypes =
+    allowedCTEs.length > 0 ? eventTypes.filter((type) => allowedCTEs.includes(type.value)) : eventTypes
+
   const KDEFormSafe = KDEForm as any
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard/cte-events">
@@ -115,7 +116,27 @@ export default function NewCTEEventPage() {
         </div>
       </div>
 
-      {/* Event Type Selection */}
+      {!isLoadingOrg && !organizationType && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>
+            {locale === "vi"
+              ? "Không tìm thấy phân loại tổ chức. Vui lòng liên hệ quản trị viên để cập nhật thông tin tổ chức."
+              : "Organization classification not found. Please contact your administrator to update organization information."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isLoadingOrg && organizationType && (
+        <Alert>
+          <AlertDescription>
+            {locale === "vi"
+              ? `Tổ chức: ${organizationName} - Các sự kiện CTE được phép: ${allowedCTEs.map((cte) => t(`cte.${cte}`)).join(", ")}`
+              : `Organization: ${organizationName} - Allowed CTE events: ${allowedCTEs.map((cte) => t(`cte.${cte}`)).join(", ")}`}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>{t("newCteEvent.selectType")}</CardTitle>
@@ -127,12 +148,25 @@ export default function NewCTEEventPage() {
             <Select
               value={selectedEventType || undefined}
               onValueChange={(value) => setSelectedEventType(value as CTEType)}
+              disabled={isLoadingOrg || !organizationType}
             >
               <SelectTrigger id="eventType">
-                <SelectValue placeholder={t("newCteEvent.selectEventType")} />
+                <SelectValue
+                  placeholder={
+                    isLoadingOrg
+                      ? locale === "vi"
+                        ? "Đang tải..."
+                        : "Loading..."
+                      : !organizationType
+                        ? locale === "vi"
+                          ? "Vui lòng cập nhật phân loại tổ chức"
+                          : "Please update organization classification"
+                        : t("newCteEvent.selectEventType")
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {eventTypes.map((type) => (
+                {filteredEventTypes.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     <div className="flex flex-col">
                       <span className="font-medium">{type.label}</span>
@@ -146,7 +180,6 @@ export default function NewCTEEventPage() {
         </CardContent>
       </Card>
 
-      {/* KDE Form */}
       {selectedEventType && (
         <KDEFormSafe
           eventType={selectedEventType}
