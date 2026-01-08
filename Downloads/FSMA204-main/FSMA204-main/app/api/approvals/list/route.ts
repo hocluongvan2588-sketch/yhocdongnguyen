@@ -22,7 +22,7 @@ export const GET = withRateLimit(async (request: NextRequest) => {
       throw new AppError("Organization not found", ErrorCode.NOT_FOUND, 404)
     }
 
-    if (!["manager", "system_admin", "org_admin"].includes(profile.role)) {
+    if (!["manager", "admin", "system_admin"].includes(profile.role)) {
       throw new AppError("Only managers and administrators can view approvals", ErrorCode.FORBIDDEN, 403)
     }
 
